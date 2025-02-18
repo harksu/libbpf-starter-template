@@ -108,15 +108,7 @@ sudo apt-get install -y --no-install-recommends \
 
 to install dependencies.
 
-### **4. Build the project**
-
-To build the project, run the following command:
-
-```sh
-make build
-```
-
-This will compile your code and create the necessary binaries. You can you the `Github Code space` or `Github Action` to build the project as well.
+### **4. Activate BPF LSM Availability**
 
 ### ***Run the Project***
 
@@ -126,21 +118,41 @@ You can run the binary with:
 sudo src/bootstrap
 ```
 
-Or with Github Packages locally:
+### Manual 
 
-```console
-docker run --rm -it --privileged -v $(pwd):/examples ghcr.io/eunomia-bpf/libbpf-template:latest
+First, please confirm that your kernel version is higher than 5.7. Next, you can use the following command to check if BPF LSM support is enabled:
+```sh
+$ cat /boot/config-$(uname -r) | grep BPF_LSM
+CONFIG_BPF_LSM=y
 ```
 
-### **7. GitHub Actions**
+If the output contains CONFIG_BPF_LSM=y, BPF LSM is supported. Provided that the above conditions are met, you can use the following command to check if the output includes the bpf option:
+```sh
+$ cat /sys/kernel/security/lsm
+ndlock,lockdown,yama,integrity,AppArmor,bpf
+```
 
-This template also includes a GitHub action that will automatically build and publish your project when you push to the repository.
-To customize this action, edit the **`.github/workflows/publish.yml`** file.
+If the output does not include the **`bpf`** option (as in the example above), you can modify **`/etc/default/grub`**:
+```sh
+GRUB_CMDLINE_LINUX="lsm=ndlock,lockdown,yama,integrity,apparmor,bpf"
+```
 
-## **Contributing**
+Then, update the grub configuration using the **`update-grub2`** command (the corresponding command may vary depending on the system), and restart the system.
 
-We welcome contributions to improve this template! If you have any ideas or suggestions,
-feel free to create an issue or submit a pull request.
+### **5. Build the project**
+
+To build the project, run the following command:
+
+```sh
+make build
+```
+
+
+### **Additional**
+You can print the kernel space log created by `bpf_printk` using following command.
+```sh
+sudo cat /sys/kernel/debug/tracing/trace_pipe
+```
 
 ## **License**
 
